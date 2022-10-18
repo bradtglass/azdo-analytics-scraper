@@ -8,7 +8,7 @@ public class TokenPaginator<T> : IPaginator<T>
     {
         this.requestPage = requestPage;
     }
-    
+
     public async IAsyncEnumerable<T> GetAsync()
     {
         string? token = null;
@@ -18,7 +18,7 @@ public class TokenPaginator<T> : IPaginator<T>
             token = page.ContinuationToken;
 
             var hasItems = false;
-            foreach (var item in page.Items)
+            foreach (var item in page)
             {
                 hasItems = true;
                 yield return item;

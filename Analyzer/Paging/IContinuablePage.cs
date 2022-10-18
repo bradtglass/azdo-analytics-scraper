@@ -1,8 +1,6 @@
 ﻿namespace Analyzer;
 
-public interface IContinuablePage<out T>
+public interface IContinuablePage<out T> : IEnumerable<T>
 {
     string? ContinuationToken { get; }
-
-    IEnumerable<T> Items { get; }
 }

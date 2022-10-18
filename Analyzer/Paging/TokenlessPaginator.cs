@@ -2,7 +2,7 @@
 
 public class TokenlessPaginator<T> : IPaginator<T>
 {
-    public delegate ValueTask<IEnumerable<T>> GetPageAsyncDelegate(int top, int skip);
+    public delegate ValueTask<IEnumerable<T>> GetPageAsyncDelegate(PageIndex page);
 
     private readonly GetPageAsyncDelegate getPageDelegate;
 
@@ -13,22 +13,19 @@ public class TokenlessPaginator<T> : IPaginator<T>
 
     public async IAsyncEnumerable<T> GetAsync()
     {
-        const int pageSize = 100;
-        var page = 0;
+        var page = PageIndex.DefaultFirstPage;
 
-        int iteratedCount;
+        bool hasItems;
         do
         {
-            iteratedCount = 0;
+            var items = await getPageDelegate(page++).ConfigureAwait(false);
 
-            var items = await getPageDelegate(pageSize, page * pageSize).ConfigureAwait(false);
-            page++;
-
+            hasItems = false;
             foreach (var item in items)
             {
-                iteratedCount++;
+                hasItems = true;
                 yield return item;
             }
-        } while (iteratedCount == pageSize);
+        } while (hasItems);
     }
 }
