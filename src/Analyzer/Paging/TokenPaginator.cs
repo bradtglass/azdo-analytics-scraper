@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Analyzer;
+namespace Analyzer.Paging;
 
 public class TokenPaginator<T> : IPaginator<T>
 {

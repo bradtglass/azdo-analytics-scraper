@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace Analyzer;
+namespace Analyzer.Paging;
 
 public record ContinuablePage<T>(string? ContinuationToken, IEnumerable<T> Items) : IContinuablePage<T>
 {

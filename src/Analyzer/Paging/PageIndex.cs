@@ -1,4 +1,4 @@
-﻿namespace Analyzer;
+﻿namespace Analyzer.Paging;
 
 public readonly struct PageIndex
 {
