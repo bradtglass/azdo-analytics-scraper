@@ -1,4 +1,6 @@
-﻿namespace Analyzer;
+﻿using System.Collections.Generic;
+
+namespace Analyzer;
 
 public interface IContinuablePage<out T> : IEnumerable<T>
 {

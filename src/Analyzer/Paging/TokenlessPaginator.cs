@@ -1,4 +1,7 @@
-﻿namespace Analyzer;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace Analyzer;
 
 public class TokenlessPaginator<T> : IPaginator<T>
 {

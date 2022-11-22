@@ -1,4 +1,6 @@
-﻿namespace Analyzer.Client;
+﻿using System;
+
+namespace Analyzer.Client;
 
 public readonly struct DateRange
 {

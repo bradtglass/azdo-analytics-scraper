@@ -1,5 +1,8 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Analyzer.Client;
 using Polly;
 
