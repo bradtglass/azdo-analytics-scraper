@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Globalization;
+using System.Net;
 using Analyzer.Client;
 using Polly;
 
@@ -8,7 +9,7 @@ internal static class Program
 {
     public static async Task Main(string[] args)
     {
-        const string dateRaw = "2022-10-07";
+        const string dateRaw = "2022-11-22";
         var organisation = Environment.GetEnvironmentVariable("AZ_DO_ORG") ??
                            throw new Exception("Azure DevOps organisation not set");
         var pat = Environment.GetEnvironmentVariable("AZ_DO_PAT") ?? throw new Exception("Azure DevOps PAT not set");
@@ -25,7 +26,8 @@ internal static class Program
             pat,
             retryPolicy);
 
-        var dates = new DateRange(DateOnly.Parse(dateRaw), DateOnly.Parse(dateRaw));
+        var date = DateTimeOffset.Parse(dateRaw, styles: DateTimeStyles.AssumeLocal);
+        var dates = new DateRange(date, date.AddDays(1));
         await foreach (var project in scraperClient.GetProjectsAsync())
         {
             Console.WriteLine(project.Name);

@@ -2,7 +2,7 @@
 
 public readonly struct DateRange
 {
-    public DateRange(DateOnly from, DateOnly to)
+    public DateRange(DateTimeOffset from, DateTimeOffset to)
     {
         if (from > to)
             throw new ArgumentOutOfRangeException(nameof(to), "To must be less than from");
@@ -11,7 +11,7 @@ public readonly struct DateRange
         To = to;
     }
 
-    public DateOnly From { get; }
+    public DateTimeOffset From { get; }
 
-    public DateOnly To { get; }
+    public DateTimeOffset To { get; }
 }

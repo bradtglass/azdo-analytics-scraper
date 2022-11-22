@@ -11,6 +11,9 @@ public static class ClientExtensions
             .SetQueryParam("$skip", page.Skip);
 
     public static Url SetDates(this Url url, DateRange dates)
-        => url.SetQueryParam("searchCriteria.toDate", dates.To)
-            .SetQueryParam("searchCriteria.fromDate", dates.From);
+        => url.SetQueryParam("searchCriteria.toDate", dates.To.FormatDate())
+            .SetQueryParam("searchCriteria.fromDate", dates.From.FormatDate());
+
+    private static string FormatDate(this DateTimeOffset dto) =>
+        dto.ToString("O");
 }
