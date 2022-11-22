@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Analyzer", "Analyzer\Analyzer.csproj", "{54760BA0-D3E1-4317-A89A-4B429631F48A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Analyzer", "src/Analyzer\Analyzer.csproj", "{54760BA0-D3E1-4317-A89A-4B429631F48A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
