@@ -29,7 +29,7 @@ internal static class Program
         await foreach (var project in scraperClient.GetProjectsAsync())
         {
             Console.WriteLine(project.Name);
-            await foreach (var repo in scraperClient.GetRepositoriesAsync(project.Id))
+            await foreach (var repo in scraperClient.GetEnabledRepositoriesAsync(project.Id))
             {
                 Console.WriteLine($"- {repo.Name}");
                 await foreach (var push in scraperClient.GetPushesAsync(project.Id, repo.Id, dates))

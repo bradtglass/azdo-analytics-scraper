@@ -27,17 +27,22 @@ public sealed class AnalyticsScraperClient : IDisposable
     }
 
     private Url GetBaseGitAddress(Guid projectId, Guid repositoryId) =>
-        $" https://dev.azure.com/{organisation}/{projectId}/_apis/git/repositories/{repositoryId}";
+        $"https://dev.azure.com/{organisation}/{projectId}/_apis/git/repositories/{repositoryId}";
 
-    private Url GetBaseGitAddress(Guid projectId) => $" https://dev.azure.com/{organisation}/{projectId}/_apis/git";
+    private Url GetBaseGitAddress(Guid projectId) => $"https://dev.azure.com/{organisation}/{projectId}/_apis/git";
 
-    private Url GetBaseAddress() => $" https://dev.azure.com/{organisation}/_apis";
+    private Url GetBaseAddress() => $"https://dev.azure.com/{organisation}/_apis";
 
-    private async ValueTask<IContinuablePage<T>> GetJsonPageAsync<T>(HttpResponseMessage response)
+    private async ValueTask<T> ReadJsonAsync<T>(HttpResponseMessage response)
     {
         response.EnsureSuccessStatusCode();
 
-        var items = await response.Content.ReadAsAsync<VssJsonCollectionWrapper<List<T>>>(mediaFormatters);
+        return await response.Content.ReadAsAsync<T>(mediaFormatters);
+    }
+
+    private async ValueTask<IContinuablePage<T>> ReadJsonPageAsync<T>(HttpResponseMessage response)
+    {
+        var items = await ReadJsonAsync<VssJsonCollectionWrapper<List<T>>>(response);
         var continuationToken = response.Headers.TryGetValues("x-ms-continuationtoken", out var values)
             ? values.FirstOrDefault()
             : null;
@@ -45,7 +50,7 @@ public sealed class AnalyticsScraperClient : IDisposable
         return new ContinuablePage<T>(continuationToken, items.Value);
     }
 
-    private async ValueTask<IContinuablePage<TeamProjectReference>> GetProjectsAsync(string? continuationToken)
+    private async ValueTask<IContinuablePage<TeamProject>> GetProjectsAsync(string? continuationToken)
     {
         using var request = GetBaseAddress()
             .AppendPathSegment("projects")
@@ -53,10 +58,10 @@ public sealed class AnalyticsScraperClient : IDisposable
             .Get();
 
         using var response = await client.SendAsync(request);
-        return await GetJsonPageAsync<TeamProjectReference>(response);
+        return await ReadJsonPageAsync<TeamProject>(response);
     }
 
-    private async ValueTask<IEnumerable<GitPushRef>> GetPushesAsync(Guid projectId, Guid repoId, PageIndex page,
+    private async ValueTask<IEnumerable<GitPush>> GetPushesAsync(Guid projectId, Guid repoId, PageIndex page,
         DateRange dates)
     {
         using var request = GetBaseGitAddress(projectId, repoId)
@@ -66,27 +71,28 @@ public sealed class AnalyticsScraperClient : IDisposable
             .Get();
 
         using var response = await client.SendAsync(request);
-        return await GetJsonPageAsync<GitPushRef>(response);
+        return await ReadJsonPageAsync<GitPush>(response);
     }
 
-    public IAsyncEnumerable<TeamProjectReference> GetProjectsAsync() =>
-        new TokenPaginator<TeamProjectReference>(GetProjectsAsync).GetAsync();
+    public IAsyncEnumerable<TeamProject> GetProjectsAsync() =>
+        new TokenPaginator<TeamProject>(GetProjectsAsync).GetAsync();
 
-    public async IAsyncEnumerable<GitRepositoryRef> GetRepositoriesAsync(Guid projectId)
+    public async IAsyncEnumerable<GitRepository> GetEnabledRepositoriesAsync(Guid projectId)
     {
         using var request = GetBaseGitAddress(projectId)
             .AppendPathSegment("repositories")
             .Get();
 
         using var response = await client.SendAsync(request);
-        var repos = await GetJsonPageAsync<GitRepositoryRef>(response);
+        var repos = await ReadJsonPageAsync<GitRepository>(response);
 
-        foreach (var repo in repos) yield return repo;
+        foreach (var repo in repos.Where(r => !r.IsDisabled.GetValueOrDefault(false)))
+            yield return repo;
     }
 
-    public IAsyncEnumerable<GitPushRef> GetPushesAsync(Guid projectId, Guid repoId, DateRange dates)
+    public IAsyncEnumerable<GitPush> GetPushesAsync(Guid projectId, Guid repoId, DateRange dates)
     {
-        return new TokenlessPaginator<GitPushRef>(page => GetPushesAsync(projectId, repoId, page, dates))
+        return new TokenlessPaginator<GitPush>(page => GetPushesAsync(projectId, repoId, page, dates))
             .GetAsync();
     }
 }
