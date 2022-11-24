@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace Data;
+namespace Analyzer.Data;
 
 [Index(nameof(DevOpsId), IsUnique = true)]
-public class Project
+public class Repository
 {
     public required Guid Id { get; set; }
 
@@ -13,7 +12,5 @@ public class Project
 
     public required string Name { get; set; }
 
-    public required List<Repository> Repositories { get; set; }
-
-    public required string Organisation { get; set; }
+    public required Project Project { get; set; }
 }

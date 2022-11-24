@@ -1,4 +1,4 @@
-﻿namespace Data;
+﻿namespace Analyzer.Data;
 
 public enum PullRequestState
 {

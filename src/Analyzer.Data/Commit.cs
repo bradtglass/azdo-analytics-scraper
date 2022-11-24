@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
-namespace Data;
+namespace Analyzer.Data;
 
 [Index(nameof(Sha), IsUnique = true)]
 public class Commit

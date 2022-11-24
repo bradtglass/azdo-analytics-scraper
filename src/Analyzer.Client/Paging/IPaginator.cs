@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Analyzer.Paging;
+namespace Analyzer.Client.Paging;
 
 public interface IPaginator<T>
 {

@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 
-namespace Data;
+namespace Analyzer.Data;
 
 [Index(nameof(DevOpsId), IsUnique = true)]
 public class PullRequest

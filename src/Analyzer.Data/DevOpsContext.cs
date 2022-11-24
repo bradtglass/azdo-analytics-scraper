@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace Data;
+namespace Analyzer.Data;
 
 public class DevOpsContext : DbContext
 {

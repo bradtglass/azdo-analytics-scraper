@@ -5,10 +5,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Flurl" Version="3.0.6"/>
-        <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="19.211.0-preview"/>
-        <PackageReference Include="Polly" Version="7.2.3"/>
-        <PackageReference Include="System.Linq.Async" Version="6.0.1"/>
+      <ProjectReference Include="..\Analyzer.Client\Analyzer.Client.csproj" />
+      <ProjectReference Include="..\Analyzer.Data\Analyzer.Data.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Net.Http;
-using Analyzer.Paging;
+using Analyzer.Client.Paging;
 using Flurl;
 
 namespace Analyzer.Client;
