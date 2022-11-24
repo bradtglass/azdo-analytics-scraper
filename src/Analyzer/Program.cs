@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Globalization;
-using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Analyzer.Client;
-using Analyzer.Data;
-using Microsoft.EntityFrameworkCore;
-using Polly;
 
 namespace Analyzer;
 
@@ -16,8 +11,8 @@ internal static class Program
     {
         const string dateRaw = "2022-11-22";
 
-        using var scraperClient = CreateClient();
-        await using var context = CreateContext();
+        using var scraperClient = Services.CreateClient();
+        await using var context = Services.CreateContext();
 
         var date = DateTimeOffset.Parse(dateRaw, styles: DateTimeStyles.AssumeLocal);
         var dates = new DateRange(date, date.AddDays(1));
@@ -31,21 +26,5 @@ internal static class Program
                     Console.WriteLine($"-- {push.PushedBy.DisplayName}");
             }
         }
-    }
-    
-    private static AnalyticsScraperClient CreateClient()
-    =>new(Configuration.GetOrganisation(),
-        Configuration.GetAccessToken(),
-        Configuration.GetPolicy());
-
-    private static DevOpsContext CreateContext()
-    {
-        DbContextOptionsBuilder<DevOpsContext> builder = new();
-        builder.UseSqlServer(Configuration.GetConnectionString());
-#if DEBUG
-        builder.EnableSensitiveDataLogging();
-#endif
-
-        return new DevOpsContext(builder.Options);
     }
 }

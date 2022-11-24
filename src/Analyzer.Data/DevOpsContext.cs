@@ -4,6 +4,14 @@ namespace Analyzer.Data;
 
 public class DevOpsContext : DbContext
 {
+    protected override void ConfigureConventions(ModelConfigurationBuilder builder)
+    {
+        builder.Properties<DevOpsGuid>()
+            .HaveConversion<DevOpsGuid.EfCoreValueConverter>();
+        builder.Properties<DevOpsIntId>()
+            .HaveConversion<DevOpsIntId.EfCoreValueConverter>();
+    }
+
     public DevOpsContext(DbContextOptions options) : base(options) { }
 
     public DbSet<Commit> Commits => Set<Commit>();

@@ -7,7 +7,9 @@ namespace Analyzer.Data;
 [Index(nameof(Sha), IsUnique = true)]
 public class Commit
 {
-    [MaxLength(20)] public required byte[] Sha { get; set; }
+    [Key]
+    [MaxLength(20)]
+    public required byte[] Sha { get; set; }
 
     public required Repository Repository { get; set; }
 
