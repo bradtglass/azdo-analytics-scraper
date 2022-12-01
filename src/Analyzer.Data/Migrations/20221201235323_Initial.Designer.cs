@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Analyzer.Data.Migrations
 {
     [DbContext(typeof(DevOpsContext))]
-    [Migration("20221124223756_Initial")]
+    [Migration("20221201235323_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -20,6 +20,7 @@ namespace Analyzer.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("azdo")
                 .HasAnnotation("ProductVersion", "7.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
@@ -47,10 +48,7 @@ namespace Analyzer.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("PushId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("RepositoryId")
+                    b.Property<Guid>("PushId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Sha");
@@ -61,12 +59,10 @@ namespace Analyzer.Data.Migrations
 
                     b.HasIndex("PushId");
 
-                    b.HasIndex("RepositoryId");
-
                     b.HasIndex("Sha")
                         .IsUnique();
 
-                    b.ToTable("Commits");
+                    b.ToTable("Commits", "azdo");
                 });
 
             modelBuilder.Entity("Analyzer.Data.Identity", b =>
@@ -95,7 +91,7 @@ namespace Analyzer.Data.Migrations
                     b.HasIndex("UniqueName")
                         .IsUnique();
 
-                    b.ToTable("Identities");
+                    b.ToTable("Identities", "azdo");
                 });
 
             modelBuilder.Entity("Analyzer.Data.Project", b =>
@@ -120,7 +116,7 @@ namespace Analyzer.Data.Migrations
                     b.HasIndex("DevOpsId")
                         .IsUnique();
 
-                    b.ToTable("Projects");
+                    b.ToTable("Projects", "azdo");
                 });
 
             modelBuilder.Entity("Analyzer.Data.PullRequest", b =>
@@ -137,6 +133,9 @@ namespace Analyzer.Data.Migrations
 
                     b.Property<int>("DevOpsId")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("IdentityId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<byte[]>("MergeCommitSha")
                         .HasColumnType("varbinary(20)");
@@ -156,11 +155,13 @@ namespace Analyzer.Data.Migrations
                     b.HasIndex("DevOpsId")
                         .IsUnique();
 
+                    b.HasIndex("IdentityId");
+
                     b.HasIndex("MergeCommitSha");
 
                     b.HasIndex("RepositoryId");
 
-                    b.ToTable("PullRequests");
+                    b.ToTable("PullRequests", "azdo");
                 });
 
             modelBuilder.Entity("Analyzer.Data.Push", b =>
@@ -175,6 +176,9 @@ namespace Analyzer.Data.Migrations
                     b.Property<Guid>("IdentityId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTimeOffset>("Timestamp")
                         .HasColumnType("datetimeoffset");
 
@@ -185,7 +189,9 @@ namespace Analyzer.Data.Migrations
 
                     b.HasIndex("IdentityId");
 
-                    b.ToTable("Pushes");
+                    b.HasIndex("RepositoryId");
+
+                    b.ToTable("Pushes", "azdo");
                 });
 
             modelBuilder.Entity("Analyzer.Data.Repository", b =>
@@ -211,30 +217,26 @@ namespace Analyzer.Data.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.ToTable("Repositories");
+                    b.ToTable("Repositories", "azdo");
                 });
 
             modelBuilder.Entity("Analyzer.Data.Commit", b =>
                 {
                     b.HasOne("Analyzer.Data.Identity", "Author")
-                        .WithMany()
+                        .WithMany("AuthoredCommits")
                         .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Analyzer.Data.Identity", "Commiter")
-                        .WithMany()
+                        .WithMany("CommitedCommits")
                         .HasForeignKey("CommiterId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Analyzer.Data.Push", null)
+                    b.HasOne("Analyzer.Data.Push", "Push")
                         .WithMany("Commits")
-                        .HasForeignKey("PushId");
-
-                    b.HasOne("Analyzer.Data.Repository", "Repository")
-                        .WithMany()
-                        .HasForeignKey("RepositoryId")
+                        .HasForeignKey("PushId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -242,17 +244,21 @@ namespace Analyzer.Data.Migrations
 
                     b.Navigation("Commiter");
 
-                    b.Navigation("Repository");
+                    b.Navigation("Push");
                 });
 
             modelBuilder.Entity("Analyzer.Data.PullRequest", b =>
                 {
+                    b.HasOne("Analyzer.Data.Identity", null)
+                        .WithMany("PullRequests")
+                        .HasForeignKey("IdentityId");
+
                     b.HasOne("Analyzer.Data.Commit", "MergeCommit")
                         .WithMany()
                         .HasForeignKey("MergeCommitSha");
 
                     b.HasOne("Analyzer.Data.Repository", "Repository")
-                        .WithMany()
+                        .WithMany("PullRequests")
                         .HasForeignKey("RepositoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -270,7 +276,15 @@ namespace Analyzer.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Analyzer.Data.Repository", "Repository")
+                        .WithMany("Pushes")
+                        .HasForeignKey("RepositoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Identity");
+
+                    b.Navigation("Repository");
                 });
 
             modelBuilder.Entity("Analyzer.Data.Repository", b =>
@@ -284,6 +298,15 @@ namespace Analyzer.Data.Migrations
                     b.Navigation("Project");
                 });
 
+            modelBuilder.Entity("Analyzer.Data.Identity", b =>
+                {
+                    b.Navigation("AuthoredCommits");
+
+                    b.Navigation("CommitedCommits");
+
+                    b.Navigation("PullRequests");
+                });
+
             modelBuilder.Entity("Analyzer.Data.Project", b =>
                 {
                     b.Navigation("Repositories");
@@ -292,6 +315,13 @@ namespace Analyzer.Data.Migrations
             modelBuilder.Entity("Analyzer.Data.Push", b =>
                 {
                     b.Navigation("Commits");
+                });
+
+            modelBuilder.Entity("Analyzer.Data.Repository", b =>
+                {
+                    b.Navigation("PullRequests");
+
+                    b.Navigation("Pushes");
                 });
 #pragma warning restore 612, 618
         }

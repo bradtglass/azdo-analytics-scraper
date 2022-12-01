@@ -7,7 +7,7 @@ namespace Analyzer.Data;
 [Index(nameof(DevOpsId), IsUnique = true)]
 public class Push
 {
-    public required Guid Id { get; set; }
+    public Guid Id { get; set; }
 
     public required Identity Identity { get; set; }
 
@@ -15,5 +15,7 @@ public class Push
 
     public required DateTimeOffset Timestamp { get; set; }
 
-    public required List<Commit> Commits { get; set; }
+    public List<Commit> Commits { get; } = new();
+    
+    public required Repository Repository { get; set; }
 }
