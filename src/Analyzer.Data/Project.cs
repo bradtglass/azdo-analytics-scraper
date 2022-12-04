@@ -7,13 +7,18 @@ namespace Analyzer.Data;
 [Index(nameof(DevOpsId), IsUnique = true)]
 public class Project
 {
+    public Project(DevOpsGuid devOpsId)
+    {
+        DevOpsId = devOpsId;
+    }
+
     public Guid Id { get; set; }
 
-    public required DevOpsGuid DevOpsId { get; set; }
+    public DevOpsGuid DevOpsId { get; set; }
 
-    public required string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public List<Repository> Repositories { get; } = new();
 
-    public required string Organisation { get; set; }
+    public string Organisation { get; set; } = null!;
 }

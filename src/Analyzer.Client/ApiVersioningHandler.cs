@@ -8,12 +8,6 @@ namespace Analyzer.Client;
 
 public class ApiVersioningHandler : DelegatingHandler
 {
-    private ApiVersioningHandler()
-    {
-    }
-
-    public static ApiVersioningHandler Instance { get; } = new();
-
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
         CancellationToken cancellationToken)
     {

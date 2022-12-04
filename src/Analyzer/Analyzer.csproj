@@ -9,4 +9,13 @@
       <ProjectReference Include="..\Analyzer.Data\Analyzer.Data.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Autofac" Version="6.5.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Scraping\Commits" />
+      <Folder Include="Scraping\PullRequests" />
+    </ItemGroup>
+
 </Project>

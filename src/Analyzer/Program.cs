@@ -1,30 +1,55 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Threading.Tasks;
 using Analyzer.Client;
+using Analyzer.Data;
+using Analyzer.Scraping;
+using Analyzer.Scraping.Projects;
+using Autofac;
+using Microsoft.EntityFrameworkCore;
 
 namespace Analyzer;
 
 internal static class Program
 {
+    private const string dateRaw = "2022-11-22";
+
     public static async Task Main(string[] args)
     {
-        const string dateRaw = "2022-11-22";
+        await using var container = Services.CreateContainer();
 
-        using var scraperClient = Services.CreateClient();
-        await using var context = Services.CreateContext();
+        await using (var scope = container.BeginLifetimeScope())
+        {
+            await EnsureMigrationsAsync(scope);
+        }
 
+        await using (var scope = container.BeginLifetimeScope())
+        {
+            await ScrapeAsync(scope);
+        }
+    }
+
+    private static async ValueTask EnsureMigrationsAsync(IComponentContext scope)
+    {
+        var context = scope.Resolve<DevOpsContext>();
+        await context.Database.MigrateAsync();
+    }
+
+    private static async ValueTask ScrapeAsync(ILifetimeScope scope)
+    {
         var date = DateTimeOffset.Parse(dateRaw, styles: DateTimeStyles.AssumeLocal);
         var dates = new DateRange(date, date.AddDays(1));
-        await foreach (var project in scraperClient.GetProjectsAsync())
+
+        ConcurrentQueue<IScraperDefinition> definitions = new();
+        definitions.Enqueue(new ProjectScraperDefinition(dates));
+
+        while (definitions.TryDequeue(out var definition))
         {
-            Console.WriteLine(project.Name);
-            await foreach (var repo in scraperClient.GetEnabledRepositoriesAsync(project.Id))
-            {
-                Console.WriteLine($"- {repo.Name}");
-                await foreach (var push in scraperClient.GetPushesAsync(project.Id, repo.Id, dates))
-                    Console.WriteLine($"-- {push.PushedBy.DisplayName}");
-            }
+            await using var innerScope = scope.BeginLifetimeScope();
+
+            var runner = innerScope.Resolve<IScraperRunner>();
+            await foreach (var next in runner.RunAsync(definition, default)) definitions.Enqueue(next);
         }
     }
 }

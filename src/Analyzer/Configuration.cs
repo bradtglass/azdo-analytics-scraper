@@ -9,7 +9,7 @@ namespace Analyzer;
 public static class Configuration
 {
     public static string GetConnectionString()
-        => GetRequiredVariable("AZ_DO_DB", @"Server=(localdb)\DevOpsAnalytics;Integrated Security=true;");
+        => GetRequiredVariable("AZ_DO_DB", @"Server=(localdb)\DevOpsAnalytics;Initial Catalog=AZDOAnalytics;Integrated Security=true;");
 
     public static string GetAccessToken()
         => GetRequiredVariable("AZ_DO_PAT");

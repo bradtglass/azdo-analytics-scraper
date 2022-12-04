@@ -9,7 +9,6 @@ using Flurl;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
-using Polly;
 
 namespace Analyzer.Client;
 
@@ -17,15 +16,16 @@ public sealed class AnalyticsScraperClient : IDisposable
 {
     private readonly HttpClient client;
     private readonly MediaTypeFormatter[] mediaFormatters = { new VssJsonMediaTypeFormatter() };
-    private readonly string organisation;
 
-    public AnalyticsScraperClient(string organisation, string pat, AsyncPolicy<HttpResponseMessage> policy)
+    public AnalyticsScraperClient(AnalyticsScraperClientOptions options)
     {
-        this.organisation = organisation;
-        client = HttpClientFactory.Create(ApiVersioningHandler.Instance,
-            new DevOpsAuthenticatingHandler(pat),
-            new PollyHandler(policy));
+        Organisation = options.Organisation;
+        client = HttpClientFactory.Create(new ApiVersioningHandler(),
+            new DevOpsAuthenticatingHandler(options.AccessToken),
+            new PollyHandler(options.Policy));
     }
+
+    public string Organisation { get; }
 
     public void Dispose()
     {
@@ -33,11 +33,11 @@ public sealed class AnalyticsScraperClient : IDisposable
     }
 
     private Url GetBaseGitAddress(Guid projectId, Guid repositoryId) =>
-        $"https://dev.azure.com/{organisation}/{projectId}/_apis/git/repositories/{repositoryId}";
+        $"https://dev.azure.com/{Organisation}/{projectId}/_apis/git/repositories/{repositoryId}";
 
-    private Url GetBaseGitAddress(Guid projectId) => $"https://dev.azure.com/{organisation}/{projectId}/_apis/git";
+    private Url GetBaseGitAddress(Guid projectId) => $"https://dev.azure.com/{Organisation}/{projectId}/_apis/git";
 
-    private Url GetBaseAddress() => $"https://dev.azure.com/{organisation}/_apis";
+    private Url GetBaseAddress() => $"https://dev.azure.com/{Organisation}/_apis";
 
     private async ValueTask<T> ReadJsonAsync<T>(HttpResponseMessage response)
     {
