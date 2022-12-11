@@ -4,6 +4,8 @@ using Analyzer.Data;
 using Analyzer.Scraping;
 using Autofac;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Analyzer;
 
@@ -14,10 +16,12 @@ public static class Services
             Configuration.GetAccessToken(),
             Configuration.GetPolicy());
 
-    private static DbContextOptions<DevOpsContext> CreateContextOptions()
+    private static DbContextOptions<DevOpsContext> CreateContextOptions(ILoggerFactory loggerFactory)
     {
         DbContextOptionsBuilder<DevOpsContext> builder = new();
-        builder.UseSqlServer(Configuration.GetConnectionString());
+        builder.UseSqlServer(Configuration.GetConnectionString())
+            .UseLoggerFactory(loggerFactory);
+
 #if DEBUG
         builder.EnableSensitiveDataLogging();
 #endif
@@ -29,6 +33,11 @@ public static class Services
     {
         var builder = new ContainerBuilder();
 
+        // Logging
+        builder.Register(_ => LoggerFactory.Create(b => b.AddSerilog()))
+            .As<ILoggerFactory>()
+            .SingleInstance();
+
         // API Client
         builder.Register(_ => CreateClientOptions())
             .As<AnalyticsScraperClientOptions>()
@@ -39,7 +48,7 @@ public static class Services
             .InstancePerLifetimeScope();
 
         // Database Context
-        builder.Register(_ => CreateContextOptions())
+        builder.Register(cc => CreateContextOptions(cc.Resolve<ILoggerFactory>()))
             .As<DbContextOptions>()
             .SingleInstance();
 
@@ -66,6 +75,7 @@ public static class Services
             .AsImplementedInterfaces()
             .InstancePerDependency();
 
+        Log.Information("Building services container");
         return builder.Build();
     }
 }
