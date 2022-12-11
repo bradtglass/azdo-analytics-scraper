@@ -8,6 +8,8 @@ using Analyzer.Client.Paging;
 using Flurl;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
+using Microsoft.VisualStudio.Services.Identity;
+using Microsoft.VisualStudio.Services.Identity.Client;
 using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Analyzer.Client;
@@ -38,6 +40,8 @@ public sealed class AnalyticsScraperClient : IDisposable
     private Url GetBaseGitAddress(Guid projectId) => $"https://dev.azure.com/{Organisation}/{projectId}/_apis/git";
 
     private Url GetBaseAddress() => $"https://dev.azure.com/{Organisation}/_apis";
+    
+    private Url GetVssBaseAddress() => $"https://vssps.dev.azure.com/{Organisation}/_apis";
 
     private async ValueTask<T> ReadJsonAsync<T>(HttpResponseMessage response)
     {
@@ -72,12 +76,25 @@ public sealed class AnalyticsScraperClient : IDisposable
     {
         using var request = GetBaseGitAddress(projectId, repoId)
             .AppendPathSegment("pushes")
-            .SetPage(page)
+            .SetPage(page, PageQueryFormat.DollarPrefix)
             .SetDates(dates)
             .Get();
 
         using var response = await client.SendAsync(request);
         return await ReadJsonPageAsync<GitPush>(response);
+    }
+
+    private async ValueTask<IEnumerable<GitCommit>> GetPushCommitsAsync(Guid projectId, Guid repoId, int pushId, 
+        PageIndex page)
+    {
+        using var request = GetBaseGitAddress(projectId, repoId)
+            .AppendPathSegment("commits")
+            .SetPage(page, PageQueryFormat.SansDollar)
+            .SetQueryParam("pushId", pushId)
+            .Get();
+
+        using var response = await client.SendAsync(request);
+        return await ReadJsonPageAsync<GitCommit>(response);
     }
 
     public IAsyncEnumerable<TeamProject> GetProjectsAsync() =>
@@ -100,5 +117,25 @@ public sealed class AnalyticsScraperClient : IDisposable
     {
         return new TokenlessPaginator<GitPush>(page => GetPushesAsync(projectId, repoId, page, dates))
             .GetAsync();
+    }
+
+    public IAsyncEnumerable<GitCommit> GetPushCommitsAsync(Guid projectId, Guid repoId, int pushId)
+    {
+        return new TokenlessPaginator<GitCommit>(page => GetPushCommitsAsync(projectId, repoId, pushId, page))
+            .GetAsync();
+    }
+
+    public async ValueTask<Identity?> FindIdentityByEmailAsync(string emailAddress)
+    {
+        using var request = GetVssBaseAddress()
+            .AppendPathSegment("identities")
+            .SetQueryParam("searchFilter","MailAddress")
+            .SetQueryParam("filterValue",emailAddress)
+            .Get();
+
+        using var response = await client.SendAsync(request);
+        var ids = await ReadJsonPageAsync<Identity>(response);
+
+        return ids.FirstOrDefault();
     }
 }

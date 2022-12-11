@@ -29,7 +29,7 @@ public static class Configuration
 
     public static AsyncPolicy<HttpResponseMessage> GetPolicy()
     {
-        return Policy<HttpResponseMessage>.HandleResult(r => r.StatusCode == HttpStatusCode.TooManyRequests)
+        return Policy<HttpResponseMessage>.HandleResult(r => r.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             .WaitAndRetryAsync(3,
                 (_, result, _) =>
                 {

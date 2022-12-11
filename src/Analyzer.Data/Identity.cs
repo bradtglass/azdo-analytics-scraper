@@ -6,15 +6,15 @@ namespace Analyzer.Data;
 
 [Index(nameof(DevOpsId), IsUnique = true)]
 [Index(nameof(UniqueName), IsUnique = true)]
-public class Identity
+public class Identity : IHasDevOpsId<DevOpsGuid?>
 {
     public Guid Id { get; set; }
 
     public DevOpsGuid? DevOpsId { get; set; }
 
-    public required string DisplayName { get; set; }
+    public string DisplayName { get; set; } = null!;
 
-    public required string UniqueName { get; set; }
+    public string UniqueName { get; set; } = null!;
 
     public List<Commit> AuthoredCommits { get; } = new();
 

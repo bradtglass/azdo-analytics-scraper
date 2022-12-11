@@ -5,17 +5,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using Analyzer.Client;
 using Analyzer.Data;
+using Analyzer.Scraping.Pushes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 
 namespace Analyzer.Scraping.Repos;
 
-public class ReposScraper : IScraper<RepoScraperDefinition>
+public class RepoScraper : IScraper<RepoScraperDefinition>
 {
     private readonly AnalyticsScraperClient client;
     private readonly DevOpsContext context;
 
-    public ReposScraper(DevOpsContext context, AnalyticsScraperClient client)
+    public RepoScraper(DevOpsContext context, AnalyticsScraperClient client)
     {
         this.context = context;
         this.client = client;
@@ -24,9 +25,17 @@ public class ReposScraper : IScraper<RepoScraperDefinition>
     public async IAsyncEnumerable<IScraperDefinition> ScrapeAsync(RepoScraperDefinition definition,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        var repos = await client.GetEnabledRepositoriesAsync(definition.ProjectId.Value).ToListAsync(ct);
-        await ScrapeBatchAsync(definition.ProjectId, repos, ct);
-        yield break;
+        var reposEnumerable = client.GetEnabledRepositoriesAsync(definition.ProjectId.Value);
+
+        await foreach (var repos in reposEnumerable.ChunkAsync(20, ct))
+        {
+            await ScrapeBatchAsync(definition.ProjectId, repos, ct);
+
+            foreach (var repo in repos)
+                yield return new PushScraperDefinition(definition.Window,
+                    definition.ProjectId,
+                    DevOpsGuid.From(repo.Id));
+        }
     }
 
     private async Task ScrapeBatchAsync(DevOpsGuid projectDevOpsId, IReadOnlyCollection<GitRepository> scrapedRepos,

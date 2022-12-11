@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Analyzer.Data;
 
-[Index(nameof(DevOpsId), IsUnique = true)]
-public class PullRequest
+[Index(nameof(DevOpsId), IsUnique = false)]
+public class PullRequest : IHasDevOpsId<DevOpsIntId>
 {
     public Guid Id { get; set; }
 

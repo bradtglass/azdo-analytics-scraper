@@ -4,18 +4,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Analyzer.Data;
 
-[Index(nameof(DevOpsId), IsUnique = true)]
-public class Push
+[Index(nameof(DevOpsId), IsUnique = false)]
+public class Push : IHasDevOpsId<DevOpsIntId>
 {
+    public Push(DevOpsIntId devOpsId)
+    {
+        DevOpsId = devOpsId;
+    }
+
     public Guid Id { get; set; }
 
-    public required Identity Identity { get; set; }
+    public Identity Identity { get; set; } = null!;
 
-    public required DevOpsIntId DevOpsId { get; set; }
+    public DevOpsIntId DevOpsId { get; set; }
 
-    public required DateTimeOffset Timestamp { get; set; }
+    public DateTimeOffset Timestamp { get; set; }
 
     public List<Commit> Commits { get; } = new();
-    
-    public required Repository Repository { get; set; }
+
+    public Repository Repository { get; set; } = null!;
 }

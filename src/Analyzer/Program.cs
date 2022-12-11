@@ -8,6 +8,11 @@ using Analyzer.Scraping;
 using Analyzer.Scraping.Projects;
 using Autofac;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.TeamFoundation.SourceControl.WebApi;
+using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.Identity;
+using Microsoft.VisualStudio.Services.Identity.Client;
+using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Analyzer;
 
@@ -18,7 +23,7 @@ internal static class Program
     public static async Task Main(string[] args)
     {
         await using var container = Services.CreateContainer();
-
+        
         await using (var scope = container.BeginLifetimeScope())
         {
             await EnsureMigrationsAsync(scope);

@@ -9,9 +9,26 @@ public static class ClientExtensions
 {
     public static HttpRequestMessage Get(this Url url) => new(HttpMethod.Get, url);
 
-    public static Url SetPage(this Url url, PageIndex page)
-        => url.SetQueryParam("$top", page.Top)
-            .SetQueryParam("$skip", page.Skip);
+    public static Url SetPage(this Url url, PageIndex page, PageQueryFormat format)
+    {
+        var top =  "top";
+        var skip = "skip";
+        
+        switch (format)
+        {
+            case PageQueryFormat.DollarPrefix:
+                top = '$' + top;
+                skip = '$' + skip;
+                break;
+            case PageQueryFormat.SansDollar:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(format), format, null);
+        }
+        
+        return url.SetQueryParam(top, page.Top)
+            .SetQueryParam(skip, page.Skip);
+    }
 
     public static Url SetDates(this Url url, DateRange dates)
         => url.SetQueryParam("searchCriteria.toDate", dates.To.FormatDate())

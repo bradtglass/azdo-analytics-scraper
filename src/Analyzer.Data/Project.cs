@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Analyzer.Data;
 
 [Index(nameof(DevOpsId), IsUnique = true)]
-public class Project
+public class Project : IHasDevOpsId<DevOpsGuid>
 {
     public Project(DevOpsGuid devOpsId)
     {
