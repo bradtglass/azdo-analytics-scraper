@@ -56,6 +56,10 @@ public static class Services
             .AsSelf()
             .InstancePerDependency();
 
+        builder.RegisterType<IdentityCache>()
+            .As<IIdentityCache>()
+            .SingleInstance();
+
         // Scraper Running
         builder.RegisterType<ScraperRunner>()
             .As<IScraperRunner>()

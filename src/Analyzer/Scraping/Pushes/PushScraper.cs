@@ -6,22 +6,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using Analyzer.Client;
 using Analyzer.Data;
+using Analyzer.Scraping.PullRequests;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
-using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Analyzer.Scraping.Pushes;
 
 public class PushScraper : IScraper<PushScraperDefinition>
 {
-    private readonly Dictionary<string, Identity> cachedIdentities = new();
     private readonly AnalyticsScraperClient client;
     private readonly DevOpsContext context;
+    private readonly IIdentityCache identityCache;
 
-    public PushScraper(DevOpsContext context, AnalyticsScraperClient client)
+    public PushScraper(DevOpsContext context, AnalyticsScraperClient client, IIdentityCache identityCache)
     {
         this.context = context;
         this.client = client;
+        this.identityCache = identityCache;
     }
 
     public async IAsyncEnumerable<IScraperDefinition> ScrapeAsync(PushScraperDefinition definition,
@@ -34,7 +35,7 @@ public class PushScraper : IScraper<PushScraperDefinition>
         await foreach (var pushes in pushEnumerable.ChunkAsync(20, ct))
             await ScrapeBatchAsync(definition.RepoId, pushes, ct);
 
-        yield break;
+        yield return new PullRequestScraperDefinition(definition.ProjectId, definition.RepoId);
     }
 
     private async Task ScrapeBatchAsync(DevOpsGuid repoDevOpsId, IReadOnlyCollection<GitPush> scrapedPushes,
@@ -67,7 +68,7 @@ public class PushScraper : IScraper<PushScraperDefinition>
 
         entity.Repository = repository;
         entity.Timestamp = new DateTimeOffset(scraped.Date, TimeSpan.Zero);
-        entity.Identity = await GetOrAddIdentityAsync(scraped.PushedBy);
+        entity.IdentityId = await identityCache.GetIdentityIdAsync(scraped.PushedBy);
         entity.Commits.AddRange(await ProcessCommitsAsync(scraped).ToListAsync());
 
         context.AddIfUntracked(entity);
@@ -76,50 +77,13 @@ public class PushScraper : IScraper<PushScraperDefinition>
     private IAsyncEnumerable<Commit> ProcessCommitsAsync(GitPush push)
     {
         return client.GetPushCommitsAsync(push.Repository.ProjectReference.Id, push.Repository.Id, push.PushId)
-            .SelectAwait(async gitCommit => new Commit(Commit.GetSha(gitCommit.CommitId),
+            .SelectAwait(async gitCommit => new Commit(Commit.ConvertSha(gitCommit.CommitId),
                 new DateTimeOffset(gitCommit.Committer.Date, TimeSpan.Zero),
                 new DateTimeOffset(gitCommit.Author.Date, TimeSpan.Zero),
                 gitCommit.Comment)
             {
-                Author = await GetOrAddIdentityAsync(gitCommit.Author),
-                Commiter = await GetOrAddIdentityAsync(gitCommit.Committer)
+                AuthorId = await identityCache.GetIdentityIdAsync(gitCommit.Author),
+                CommiterId = await identityCache.GetIdentityIdAsync(gitCommit.Committer)
             });
-    }
-
-    private async ValueTask<Identity> GetOrAddIdentityAsync(GitUserDate gitUserDate) =>
-        await GetOrAddIdentityAsync(gitUserDate.Name, gitUserDate.Email, null);
-
-    private async ValueTask<Identity> GetOrAddIdentityAsync(IdentityRef idRef)
-        => await GetOrAddIdentityAsync(idRef.DisplayName, idRef.UniqueName, DevOpsGuid.From(Guid.Parse(idRef.Id)));
-
-    private async ValueTask<Identity> GetOrAddIdentityAsync(string name, string email, DevOpsGuid? devOpsId)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(email);
-
-        if (cachedIdentities.TryGetValue(email, out var identity)) return identity;
-
-        identity = await context.Identities.SingleOrDefaultAsync(i => i.UniqueName == email);
-
-        if (identity is null)
-        {
-            if (!devOpsId.HasValue)
-            {
-                var id = await client.FindIdentityByEmailAsync(email);
-                if (id is not null)
-                    devOpsId = DevOpsGuid.From(id.Id);
-            }
-
-            identity = new Identity
-            {
-                DisplayName = name,
-                UniqueName = email,
-                DevOpsId = devOpsId
-            };
-
-            context.Identities.Add(identity);
-        }
-
-        cachedIdentities.Add(email, identity);
-        return identity;
     }
 }

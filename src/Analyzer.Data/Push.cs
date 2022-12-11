@@ -15,6 +15,8 @@ public class Push : IHasDevOpsId<DevOpsIntId>
     public Guid Id { get; set; }
 
     public Identity Identity { get; set; } = null!;
+    
+    public Guid IdentityId { get; set; }
 
     public DateTimeOffset Timestamp { get; set; }
 

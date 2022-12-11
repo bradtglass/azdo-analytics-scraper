@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Formatting;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Analyzer.Client.Paging;
 using Flurl;
@@ -83,6 +86,17 @@ public sealed class AnalyticsScraperClient : IDisposable
         return await ReadJsonPageAsync<GitPush>(response);
     }
 
+    private async ValueTask<IEnumerable<GitPullRequest>> GetPullRequestsAsync(Guid projectId, Guid repoId, PageIndex page)
+    {
+        using var request = GetBaseGitAddress(projectId, repoId)
+            .AppendPathSegment("pullrequests")
+            .SetPage(page, PageQueryFormat.DollarPrefix)
+            .Get();
+
+        using var response = await client.SendAsync(request);
+        return await ReadJsonPageAsync<GitPullRequest>(response);
+    }
+
     private async ValueTask<IEnumerable<GitCommit>> GetPushCommitsAsync(Guid projectId, Guid repoId, int pushId,
         PageIndex page)
     {
@@ -137,4 +151,31 @@ public sealed class AnalyticsScraperClient : IDisposable
 
         return ids.FirstOrDefault();
     }
+
+
+    public async ValueTask<List<GitPullRequest>> GetPullRequestsFromMergeCommitsAsync(Guid projectId, Guid repoId, IEnumerable<string> mergeCommitShas)
+    {
+        using var request = GetBaseGitAddress(projectId, repoId)
+            .AppendPathSegment("pullrequestquery")
+            .Get();
+
+        var query = new PullRequestQuery(new List<PullRequestQueryInput>()
+        {
+            new(mergeCommitShas.ToList(), GitPullRequestQueryType.LastMergeCommit)
+        }, new List<GitPullRequest>());
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(query);
+        var content = new ByteArrayContent(bytes);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json", "utf-8");
+        request.Content = content;
+        
+        using var response = await client.SendAsync(request);
+        var result = await ReadJsonAsync<GitPullRequestQuery>(response);
+        return result.Results.SelectMany(d => d.Values).SelectMany(pr => pr).ToList();
+    }
+
+    private record PullRequestQuery([property:JsonPropertyName("queries")]List<PullRequestQueryInput> Queries,
+        [property:JsonPropertyName("results")]List<GitPullRequest> Results);
+    
+    private record PullRequestQueryInput([property:JsonPropertyName("items")]List<string> Shas,
+        [property:JsonPropertyName("type")] [property:JsonConverter(typeof(JsonStringEnumConverter))]GitPullRequestQueryType Type);
 }

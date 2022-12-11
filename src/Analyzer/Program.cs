@@ -8,6 +8,7 @@ using Analyzer.Scraping;
 using Analyzer.Scraping.Projects;
 using Autofac;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.TeamFoundation.SourceControl.WebApi;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;

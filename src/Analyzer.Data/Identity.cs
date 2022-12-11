@@ -17,8 +17,11 @@ public class Identity : IHasDevOpsId<DevOpsGuid?>
     public List<Commit> AuthoredCommits { get; } = new();
 
     public List<Commit> CommitedCommits { get; } = new();
+    
 
     public List<PullRequest> PullRequests { get; } = new();
+    
+    public List<Push> Pushes { get; } = new();
 
     public DevOpsGuid? DevOpsId { get; set; }
 }

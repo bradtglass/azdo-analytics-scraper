@@ -22,6 +22,10 @@ public class Commit
     public Identity Commiter { get; set; } = null!;
 
     public Identity Author { get; set; } = null!;
+    
+    public Guid CommiterId { get; set; }
+
+    public Guid AuthorId { get; set; }
 
     public DateTimeOffset CommitTimestamp { get; set; }
 
@@ -30,8 +34,10 @@ public class Commit
     public string Message { get; set; }
 
     public Push Push { get; set; } = null!;
+    
+    public PullRequest? MergingPullRequest { get; set; }
 
-    public static byte[] GetSha(string value)
+    public static byte[] ConvertSha(string value)
     {
         Debug.Assert(value.Length == 40);
         var span = value.AsSpan();
@@ -44,5 +50,11 @@ public class Commit
         }
 
         return result;
+    }
+    
+    public static string ConvertSha(byte[] value)
+    {
+        Debug.Assert(value.Length == 20);
+        return BitConverter.ToString(value).Replace("-", string.Empty);
     }
 }

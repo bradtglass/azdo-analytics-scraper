@@ -30,10 +30,25 @@ public class DevOpsContext : DbContext
         modelBuilder.Entity<Commit>()
             .HasOne(c => c.Author)
             .WithMany(i => i.AuthoredCommits)
+            .HasForeignKey(c => c.AuthorId)
             .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Commit>()
             .HasOne(c => c.Commiter)
             .WithMany(i => i.CommitedCommits)
+            .HasForeignKey(c => c.CommiterId)
             .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<PullRequest>()
+            .HasOne(pr => pr.MergeCommit)
+            .WithOne(c => c.MergingPullRequest)
+            .HasPrincipalKey<PullRequest>(pr => pr.MergeCommitId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<Push>()
+            .HasOne(p => p.Identity)
+            .WithMany(i => i.Pushes)
+            .HasForeignKey(p => p.IdentityId);
+        modelBuilder.Entity<PullRequest>()
+            .HasOne(p => p.CreatedBy)
+            .WithMany(i => i.PullRequests)
+            .HasForeignKey(p => p.CreatedById);
     }
 }
