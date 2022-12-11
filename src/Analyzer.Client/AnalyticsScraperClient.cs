@@ -9,7 +9,6 @@ using Flurl;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using Microsoft.VisualStudio.Services.Identity;
-using Microsoft.VisualStudio.Services.Identity.Client;
 using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Analyzer.Client;
@@ -40,7 +39,7 @@ public sealed class AnalyticsScraperClient : IDisposable
     private Url GetBaseGitAddress(Guid projectId) => $"https://dev.azure.com/{Organisation}/{projectId}/_apis/git";
 
     private Url GetBaseAddress() => $"https://dev.azure.com/{Organisation}/_apis";
-    
+
     private Url GetVssBaseAddress() => $"https://vssps.dev.azure.com/{Organisation}/_apis";
 
     private async ValueTask<T> ReadJsonAsync<T>(HttpResponseMessage response)
@@ -84,7 +83,7 @@ public sealed class AnalyticsScraperClient : IDisposable
         return await ReadJsonPageAsync<GitPush>(response);
     }
 
-    private async ValueTask<IEnumerable<GitCommit>> GetPushCommitsAsync(Guid projectId, Guid repoId, int pushId, 
+    private async ValueTask<IEnumerable<GitCommit>> GetPushCommitsAsync(Guid projectId, Guid repoId, int pushId,
         PageIndex page)
     {
         using var request = GetBaseGitAddress(projectId, repoId)
@@ -129,8 +128,8 @@ public sealed class AnalyticsScraperClient : IDisposable
     {
         using var request = GetVssBaseAddress()
             .AppendPathSegment("identities")
-            .SetQueryParam("searchFilter","MailAddress")
-            .SetQueryParam("filterValue",emailAddress)
+            .SetQueryParam("searchFilter", "MailAddress")
+            .SetQueryParam("filterValue", emailAddress)
             .Get();
 
         using var response = await client.SendAsync(request);

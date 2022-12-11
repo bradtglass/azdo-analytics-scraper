@@ -11,9 +11,9 @@ public static class ClientExtensions
 
     public static Url SetPage(this Url url, PageIndex page, PageQueryFormat format)
     {
-        var top =  "top";
+        var top = "top";
         var skip = "skip";
-        
+
         switch (format)
         {
             case PageQueryFormat.DollarPrefix:
@@ -25,7 +25,7 @@ public static class ClientExtensions
             default:
                 throw new ArgumentOutOfRangeException(nameof(format), format, null);
         }
-        
+
         return url.SetQueryParam(top, page.Top)
             .SetQueryParam(skip, page.Skip);
     }

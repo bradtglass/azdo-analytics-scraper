@@ -14,8 +14,6 @@ public class Repository : IHasDevOpsId<DevOpsGuid>
 
     public Guid Id { get; set; }
 
-    public DevOpsGuid DevOpsId { get; set; }
-
     public string Name { get; set; } = null!;
 
     public Project Project { get; set; } = null!;
@@ -23,4 +21,6 @@ public class Repository : IHasDevOpsId<DevOpsGuid>
     public List<PullRequest> PullRequests { get; } = new();
 
     public List<Push> Pushes { get; } = new();
+
+    public DevOpsGuid DevOpsId { get; set; }
 }

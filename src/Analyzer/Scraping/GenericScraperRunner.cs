@@ -19,5 +19,6 @@ public class GenericScraperRunner<T> : GenericScraperRunnerBase
         this.scraper = scraper;
     }
 
-    public override IAsyncEnumerable<IScraperDefinition> RunAsync(CancellationToken ct) => scraper.ScrapeAsync(definition, ct);
+    public override IAsyncEnumerable<IScraperDefinition> RunAsync(CancellationToken ct) =>
+        scraper.ScrapeAsync(definition, ct);
 }

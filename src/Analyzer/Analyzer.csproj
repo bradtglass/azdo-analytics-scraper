@@ -5,16 +5,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Analyzer.Client\Analyzer.Client.csproj" />
-      <ProjectReference Include="..\Analyzer.Data\Analyzer.Data.csproj" />
+        <ProjectReference Include="..\Analyzer.Client\Analyzer.Client.csproj"/>
+        <ProjectReference Include="..\Analyzer.Data\Analyzer.Data.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Autofac" Version="6.5.0" />
+        <PackageReference Include="Autofac" Version="6.5.0"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Scraping\PullRequests" />
+        <Folder Include="Scraping\PullRequests"/>
     </ItemGroup>
 
 </Project>

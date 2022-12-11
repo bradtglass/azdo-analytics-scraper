@@ -3,4 +3,5 @@ using Analyzer.Data;
 
 namespace Analyzer.Scraping.Pushes;
 
-public record PushScraperDefinition(DateRange Window, DevOpsGuid ProjectId, DevOpsGuid RepoId) : ScraperDefinitionBase(Window);
+public record PushScraperDefinition
+    (DateRange Window, DevOpsGuid ProjectId, DevOpsGuid RepoId) : ScraperDefinitionBase(Window);

@@ -10,8 +10,6 @@ public class Identity : IHasDevOpsId<DevOpsGuid?>
 {
     public Guid Id { get; set; }
 
-    public DevOpsGuid? DevOpsId { get; set; }
-
     public string DisplayName { get; set; } = null!;
 
     public string UniqueName { get; set; } = null!;
@@ -21,4 +19,6 @@ public class Identity : IHasDevOpsId<DevOpsGuid?>
     public List<Commit> CommitedCommits { get; } = new();
 
     public List<PullRequest> PullRequests { get; } = new();
+
+    public DevOpsGuid? DevOpsId { get; set; }
 }

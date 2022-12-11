@@ -37,7 +37,7 @@ public static class Services
         builder.RegisterType<AnalyticsScraperClient>()
             .AsSelf()
             .InstancePerLifetimeScope();
-        
+
         // Database Context
         builder.Register(_ => CreateContextOptions())
             .As<DbContextOptions>()
@@ -46,7 +46,7 @@ public static class Services
         builder.RegisterType<DevOpsContext>()
             .AsSelf()
             .InstancePerDependency();
-        
+
         // Scraper Running
         builder.RegisterType<ScraperRunner>()
             .As<IScraperRunner>()
@@ -61,7 +61,8 @@ public static class Services
             .InstancePerDependency();
 
         builder.RegisterAssemblyTypes(typeof(Services).Assembly)
-            .Where(t => t.GetInterfaces().Any(i=>i.IsConstructedGenericType && i.GetGenericTypeDefinition()==typeof(IScraper<>)))
+            .Where(t => t.GetInterfaces().Any(i =>
+                i.IsConstructedGenericType && i.GetGenericTypeDefinition() == typeof(IScraper<>)))
             .AsImplementedInterfaces()
             .InstancePerDependency();
 

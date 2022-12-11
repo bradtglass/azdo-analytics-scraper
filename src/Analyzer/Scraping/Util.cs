@@ -17,7 +17,8 @@ public static class Util
             context.Set<T>().Add(entity);
     }
 
-    public static async IAsyncEnumerable<IReadOnlyCollection<T>> ChunkAsync<T>(this IAsyncEnumerable<T> source, int chunkSize,
+    public static async IAsyncEnumerable<IReadOnlyCollection<T>> ChunkAsync<T>(this IAsyncEnumerable<T> source,
+        int chunkSize,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         List<T> list = new(chunkSize);

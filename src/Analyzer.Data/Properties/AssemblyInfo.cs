@@ -1,5 +1,5 @@
 ﻿using Vogen;
 
 [assembly:
-    VogenDefaults(conversions: Conversions.SystemTextJson | 
+    VogenDefaults(conversions: Conversions.SystemTextJson |
                                Conversions.EfCoreValueConverter)]

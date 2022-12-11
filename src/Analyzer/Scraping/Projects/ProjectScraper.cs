@@ -21,13 +21,14 @@ public class ProjectScraper : IScraper<ProjectScraperDefinition>
         this.client = client;
     }
 
-    public async IAsyncEnumerable<IScraperDefinition> ScrapeAsync(ProjectScraperDefinition definition, [EnumeratorCancellation] CancellationToken ct) 
+    public async IAsyncEnumerable<IScraperDefinition> ScrapeAsync(ProjectScraperDefinition definition,
+        [EnumeratorCancellation] CancellationToken ct)
     {
         await foreach (var project in client.GetProjectsAsync().WithCancellation(ct))
         {
             ct.ThrowIfCancellationRequested();
             await Upsert(project, ct);
-            yield return GenerateChild(definition,project);
+            yield return GenerateChild(definition, project);
         }
     }
 
@@ -37,9 +38,9 @@ public class ProjectScraper : IScraper<ProjectScraperDefinition>
     private async ValueTask Upsert(TeamProject scrapedProject, CancellationToken ct)
     {
         var devOpsId = DevOpsGuid.From(scrapedProject.Id);
-        var project = await context.Projects.FirstOrDefaultAsync(p => p.DevOpsId == devOpsId, cancellationToken: ct);
+        var project = await context.Projects.FirstOrDefaultAsync(p => p.DevOpsId == devOpsId, ct);
         project ??= new Project(devOpsId);
-        
+
         project.Organisation = client.Organisation;
         project.Name = scrapedProject.Name;
 

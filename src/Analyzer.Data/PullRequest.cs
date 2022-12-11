@@ -10,8 +10,6 @@ public class PullRequest : IHasDevOpsId<DevOpsIntId>
 
     public required string Title { get; set; }
 
-    public required DevOpsIntId DevOpsId { get; set; }
-
     public required DateTimeOffset CreatedTimestamp { get; set; }
 
     public required Repository Repository { get; set; }
@@ -21,4 +19,6 @@ public class PullRequest : IHasDevOpsId<DevOpsIntId>
     public DateTimeOffset? ClosedTimestamp { get; set; }
 
     public Commit? MergeCommit { get; set; }
+
+    public required DevOpsIntId DevOpsId { get; set; }
 }

@@ -32,9 +32,7 @@ public class PushScraper : IScraper<PushScraperDefinition>
             definition.Window);
 
         await foreach (var pushes in pushEnumerable.ChunkAsync(20, ct))
-        {
             await ScrapeBatchAsync(definition.RepoId, pushes, ct);
-        }
 
         yield break;
     }

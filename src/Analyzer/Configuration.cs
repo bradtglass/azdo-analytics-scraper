@@ -9,7 +9,8 @@ namespace Analyzer;
 public static class Configuration
 {
     public static string GetConnectionString()
-        => GetRequiredVariable("AZ_DO_DB", @"Server=(localdb)\DevOpsAnalytics;Initial Catalog=AZDOAnalytics;Integrated Security=true;");
+        => GetRequiredVariable("AZ_DO_DB",
+            @"Server=(localdb)\DevOpsAnalytics;Initial Catalog=AZDOAnalytics;Integrated Security=true;");
 
     public static string GetAccessToken()
         => GetRequiredVariable("AZ_DO_PAT");
@@ -29,7 +30,8 @@ public static class Configuration
 
     public static AsyncPolicy<HttpResponseMessage> GetPolicy()
     {
-        return Policy<HttpResponseMessage>.HandleResult(r => r.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
+        return Policy<HttpResponseMessage>.HandleResult(r =>
+                r.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             .WaitAndRetryAsync(3,
                 (_, result, _) =>
                 {

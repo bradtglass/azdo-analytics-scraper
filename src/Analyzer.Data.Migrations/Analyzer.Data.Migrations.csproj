@@ -3,13 +3,13 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
     </PropertyGroup>
-    
+
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.0"/>
     </ItemGroup>
-    
+
     <ItemGroup>
-      <ProjectReference Include="..\Analyzer\Analyzer.csproj" />
+        <ProjectReference Include="..\Analyzer\Analyzer.csproj"/>
     </ItemGroup>
 
 </Project>

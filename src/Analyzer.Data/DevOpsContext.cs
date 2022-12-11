@@ -26,7 +26,7 @@ public class DevOpsContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("azdo");
-        
+
         modelBuilder.Entity<Commit>()
             .HasOne(c => c.Author)
             .WithMany(i => i.AuthoredCommits)

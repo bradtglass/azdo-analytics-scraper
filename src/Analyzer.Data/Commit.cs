@@ -39,7 +39,7 @@ public class Commit
 
         for (var i = 0; i < 20; i++)
         {
-            var b = byte.Parse(span.Slice(i*2, 2), NumberStyles.HexNumber);
+            var b = byte.Parse(span.Slice(i * 2, 2), NumberStyles.HexNumber);
             result[i] = b;
         }
 

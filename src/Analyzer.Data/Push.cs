@@ -16,11 +16,11 @@ public class Push : IHasDevOpsId<DevOpsIntId>
 
     public Identity Identity { get; set; } = null!;
 
-    public DevOpsIntId DevOpsId { get; set; }
-
     public DateTimeOffset Timestamp { get; set; }
 
     public List<Commit> Commits { get; } = new();
 
     public Repository Repository { get; set; } = null!;
+
+    public DevOpsIntId DevOpsId { get; set; }
 }
