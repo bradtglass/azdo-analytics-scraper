@@ -40,8 +40,8 @@ public class DevOpsContext : DbContext
         modelBuilder.Entity<PullRequest>()
             .HasOne(pr => pr.MergeCommit)
             .WithOne(c => c.MergingPullRequest)
-            .HasPrincipalKey<PullRequest>(pr => pr.MergeCommitId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .HasForeignKey<PullRequest>(pr => pr.MergeCommitId)
+            .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Push>()
             .HasOne(p => p.Identity)
             .WithMany(i => i.Pushes)

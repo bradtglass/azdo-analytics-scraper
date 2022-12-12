@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Analyzer.Data;
@@ -6,7 +7,8 @@ namespace Analyzer.Data;
 [Index(nameof(DevOpsId), IsUnique = false)]
 public class PullRequest : IHasDevOpsId<DevOpsIntId>
 {
-    public PullRequest(string title, DateTimeOffset createdTimestamp, DateTimeOffset? closedTimestamp, PullRequestState state, DevOpsIntId devOpsId)
+    public PullRequest(string title, DateTimeOffset createdTimestamp, DateTimeOffset? closedTimestamp,
+        PullRequestState state, DevOpsIntId devOpsId)
     {
         Title = title;
         CreatedTimestamp = createdTimestamp;
@@ -28,12 +30,12 @@ public class PullRequest : IHasDevOpsId<DevOpsIntId>
     public DateTimeOffset? ClosedTimestamp { get; set; }
 
     public Commit? MergeCommit { get; set; }
-    
-    public byte[]? MergeCommitId { get; set; }
 
-    public DevOpsIntId DevOpsId { get; set; }
+    [MaxLength(20)] public byte[]? MergeCommitId { get; set; }
 
     public Identity CreatedBy { get; set; } = null!;
-    
+
     public Guid CreatedById { get; set; }
+
+    public DevOpsIntId DevOpsId { get; set; }
 }
