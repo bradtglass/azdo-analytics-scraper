@@ -31,7 +31,7 @@ public class PullRequest : IHasDevOpsId<DevOpsIntId>
 
     public Commit? MergeCommit { get; set; }
 
-    [MaxLength(20)] public byte[]? MergeCommitId { get; set; }
+    public GitSha? MergeCommitId { get; set; }
 
     public Identity CreatedBy { get; set; } = null!;
 

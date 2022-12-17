@@ -77,7 +77,7 @@ public class PushScraper : IScraper<PushScraperDefinition>
     private IAsyncEnumerable<Commit> ProcessCommitsAsync(GitPush push)
     {
         return client.GetPushCommitsAsync(push.Repository.ProjectReference.Id, push.Repository.Id, push.PushId)
-            .SelectAwait(async gitCommit => new Commit(Commit.ConvertSha(gitCommit.CommitId),
+            .SelectAwait(async gitCommit => new Commit(GitSha.From(gitCommit.CommitId),
                 new DateTimeOffset(gitCommit.Committer.Date, TimeSpan.Zero),
                 new DateTimeOffset(gitCommit.Author.Date, TimeSpan.Zero),
                 gitCommit.Comment)

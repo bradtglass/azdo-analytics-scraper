@@ -21,6 +21,10 @@ public class DevOpsContext : DbContext
             .HaveConversion<DevOpsGuid.EfCoreValueConverter>();
         builder.Properties<DevOpsIntId>()
             .HaveConversion<DevOpsIntId.EfCoreValueConverter>();
+        builder.Properties<GitSha>()
+            .HaveConversion<GitSha.EfCoreValueConverter>()
+            .HaveMaxLength(40)
+            .AreFixedLength();
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

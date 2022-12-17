@@ -51,7 +51,7 @@ public class PullRequestScraper : IScraper<PullRequestScraperDefinition>
 
         var pullRequests = await client.GetPullRequestsFromMergeCommitsAsync(projectId.Value,
             repoId.Value,
-            mergeCommitShas.Select(Commit.ConvertSha));
+            mergeCommitShas.Select(c=>c.Value));
 
         await InsertBatchAsync(repoId, pullRequests, ct);
     }
@@ -73,7 +73,7 @@ public class PullRequestScraper : IScraper<PullRequestScraperDefinition>
             ? null
             : (DateTimeOffset?)new DateTimeOffset(pr.ClosedDate, TimeSpan.Zero);
         var mergeCommitId = state == PullRequestState.Completed
-            ? Commit.ConvertSha(pr.LastMergeCommit.CommitId)
+            ? pr.LastMergeCommit.CommitId
             : null;
 
         var createdBy = await identityCache.GetIdentityIdAsync(pr.CreatedBy);
@@ -86,7 +86,7 @@ public class PullRequestScraper : IScraper<PullRequestScraperDefinition>
         {
             Repository = repository,
             CreatedById = createdBy,
-            MergeCommitId = mergeCommitId
+            MergeCommitId = GitSha.From(mergeCommitId)
         };
 
         context.Add(entity);
