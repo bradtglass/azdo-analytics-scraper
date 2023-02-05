@@ -29,7 +29,15 @@ public class PullRequestScraper : IScraper<PullRequestScraperDefinition>
         [EnumeratorCancellation] CancellationToken ct)
     {
         await ScrapeForUntrackedCompleted(definition.ProjectId, definition.RepoId, ct);
+        await ScrapeForIncomplete(definition.ProjectId, definition.RepoId, ct);
         yield break;
+    }
+
+    private async ValueTask ScrapeForIncomplete(DevOpsGuid projectId, DevOpsGuid repoId, CancellationToken ct)
+    {
+        await foreach (var pullRequests in client.GetActivePullRequests(projectId.Value, repoId.Value)
+                           .ChunkAsync(20, ct)) 
+            await UpsertBatchAsync(repoId, pullRequests, ct);
     }
 
     private async ValueTask ScrapeForUntrackedCompleted(DevOpsGuid projectId, DevOpsGuid repoId,
@@ -44,50 +52,62 @@ public class PullRequestScraper : IScraper<PullRequestScraperDefinition>
         }
 
         var mergeCommitShas = await context.Commits.Where(c => c.MergingPullRequest == null)
-            .Where(c => c.Author == devOpsIdentity)
+            .Where(c => c.Push.Identity == devOpsIdentity)
             .Where(c => c.Push.Repository.DevOpsId == repoId)
+            .Where(c => c.Push.Commits.Count == 1)
             .Select(c => c.Sha)
             .ToListAsync(ct);
 
+        if (mergeCommitShas.Count == 0)
+        {
+            Log.Debug("No untracked completed PRs known for {RepoId}", repoId);
+            return;
+        }
+
         var pullRequests = await client.GetPullRequestsFromMergeCommitsAsync(projectId.Value,
             repoId.Value,
-            mergeCommitShas.Select(c=>c.Value));
+            mergeCommitShas.Select(c => c.Value));
 
-        await InsertBatchAsync(repoId, pullRequests, ct);
+        await UpsertBatchAsync(repoId, pullRequests, ct);
     }
 
-    private async Task InsertBatchAsync(DevOpsGuid repoDevOpsId, IEnumerable<GitPullRequest> scrapedPullRequests,
+    private async Task UpsertBatchAsync(DevOpsGuid repoDevOpsId, IEnumerable<GitPullRequest> scrapedPullRequests,
         CancellationToken ct)
     {
         var repo = await context.Repositories.SingleAsync(p => p.DevOpsId == repoDevOpsId, ct);
 
-        foreach (var pr in scrapedPullRequests) await InsertAsync(repo, pr);
+        foreach (var pr in scrapedPullRequests) await UpsertAsync(repo, pr);
 
         await context.SaveChangesAsync(ct);
     }
 
-    private async ValueTask InsertAsync(Repository repository, GitPullRequest pr)
+    private async ValueTask UpsertAsync(Repository repository, GitPullRequest pr)
     {
         var state = MapState(pr);
+        var createdTimestamp = new DateTimeOffset(pr.CreationDate, TimeSpan.Zero);
         var closedTimestamp = state is PullRequestState.Active or PullRequestState.Draft
             ? null
             : (DateTimeOffset?)new DateTimeOffset(pr.ClosedDate, TimeSpan.Zero);
         var mergeCommitId = state == PullRequestState.Completed
             ? pr.LastMergeCommit.CommitId
             : null;
-
+        var devOpsId = DevOpsIntId.From(pr.PullRequestId);
         var createdBy = await identityCache.GetIdentityIdAsync(pr.CreatedBy);
 
-        var entity = new PullRequest(pr.Title,
-            new DateTimeOffset(pr.CreationDate, TimeSpan.Zero),
-            closedTimestamp,
-            state,
-            DevOpsIntId.From(pr.PullRequestId))
-        {
-            Repository = repository,
-            CreatedById = createdBy,
-            MergeCommitId = GitSha.From(mergeCommitId)
-        };
+        var entity = await context.PullRequests.FirstOrDefaultAsync(pr => pr.DevOpsId == devOpsId) ??
+                     new PullRequest(pr.Title,
+                         createdTimestamp,
+                         closedTimestamp,
+                         state,
+                         devOpsId);
+
+        entity.Title = pr.Title;
+        entity.ClosedTimestamp = closedTimestamp;
+        entity.State = state;
+        entity.CreatedTimestamp = createdTimestamp;
+        entity.Repository = repository;
+        entity.CreatedById = createdBy;
+        entity.MergeCommitId = GitSha.From(mergeCommitId);
 
         context.Add(entity);
     }

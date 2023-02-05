@@ -8,6 +8,8 @@ namespace Analyzer.Client;
 public static class ClientExtensions
 {
     public static HttpRequestMessage Get(this Url url) => new(HttpMethod.Get, url);
+    
+    public static HttpRequestMessage Post(this Url url) => new(HttpMethod.Post, url);
 
     public static Url SetPage(this Url url, PageIndex page, PageQueryFormat format)
     {

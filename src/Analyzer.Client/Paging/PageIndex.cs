@@ -2,7 +2,7 @@
 
 public readonly struct PageIndex
 {
-    public static readonly PageIndex DefaultFirstPage = new(0, 1);
+    public static readonly PageIndex DefaultFirstPage = new(0, 20);
 
     public override string ToString() => $"[{Index}] {Index * Size}(->{Index * Size + Size - 1})";
 

@@ -6,9 +6,11 @@ using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using Analyzer.Client.Paging;
 using Flurl;
+using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using Microsoft.VisualStudio.Services.Identity;
@@ -18,15 +20,36 @@ namespace Analyzer.Client;
 
 public sealed class AnalyticsScraperClient : IDisposable
 {
+    private readonly ILogger<AnalyticsScraperClient> logger;
     private readonly HttpClient client;
     private readonly MediaTypeFormatter[] mediaFormatters = { new VssJsonMediaTypeFormatter() };
 
-    public AnalyticsScraperClient(AnalyticsScraperClientOptions options)
+    public AnalyticsScraperClient(AnalyticsScraperClientOptions options, ILogger<AnalyticsScraperClient> logger)
     {
+        this.logger = logger;
         Organisation = options.Organisation;
-        client = HttpClientFactory.Create(new ApiVersioningHandler(),
+        client = HttpClientFactory.Create(
+            new RequestLoggingHandler(logger),
+            new ApiVersioningHandler(),
             new DevOpsAuthenticatingHandler(options.AccessToken),
             new PollyHandler(options.Policy));
+    }
+
+    public class RequestLoggingHandler : DelegatingHandler
+    {
+        private readonly ILogger logger;
+
+        public RequestLoggingHandler(ILogger logger)
+        {
+            this.logger = logger;
+        }
+        
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            logger.LogDebug("Sending request to DevOps: {Uri}", request.RequestUri);
+            return base.SendAsync(request, cancellationToken);
+        }
     }
 
     public string Organisation { get; }
@@ -86,11 +109,12 @@ public sealed class AnalyticsScraperClient : IDisposable
         return await ReadJsonPageAsync<GitPush>(response);
     }
 
-    private async ValueTask<IEnumerable<GitPullRequest>> GetPullRequestsAsync(Guid projectId, Guid repoId, PageIndex page)
+    private async ValueTask<IEnumerable<GitPullRequest>> GetActivePullRequests(Guid projectId, Guid repoId, PageIndex page)
     {
         using var request = GetBaseGitAddress(projectId, repoId)
             .AppendPathSegment("pullrequests")
             .SetPage(page, PageQueryFormat.DollarPrefix)
+            .SetQueryParam("searchCriteria.status", "active")
             .Get();
 
         using var response = await client.SendAsync(request);
@@ -132,6 +156,12 @@ public sealed class AnalyticsScraperClient : IDisposable
             .GetAsync();
     }
 
+    public IAsyncEnumerable<GitPullRequest> GetActivePullRequests(Guid projectId, Guid repoId)
+    {
+        return new TokenlessPaginator<GitPullRequest>(page => GetActivePullRequests(projectId, repoId, page))
+            .GetAsync();
+    }
+
     public IAsyncEnumerable<GitCommit> GetPushCommitsAsync(Guid projectId, Guid repoId, int pushId)
     {
         return new TokenlessPaginator<GitCommit>(page => GetPushCommitsAsync(projectId, repoId, pushId, page))
@@ -152,12 +182,11 @@ public sealed class AnalyticsScraperClient : IDisposable
         return ids.FirstOrDefault();
     }
 
-
     public async ValueTask<List<GitPullRequest>> GetPullRequestsFromMergeCommitsAsync(Guid projectId, Guid repoId, IEnumerable<string> mergeCommitShas)
     {
         using var request = GetBaseGitAddress(projectId, repoId)
             .AppendPathSegment("pullrequestquery")
-            .Get();
+            .Post();
 
         var query = new PullRequestQuery(new List<PullRequestQueryInput>()
         {

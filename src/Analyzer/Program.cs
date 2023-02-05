@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Globalization;
+using System.IO;
 using System.Threading.Tasks;
 using Analyzer.Client;
 using Analyzer.Data;
@@ -8,7 +9,6 @@ using Analyzer.Scraping;
 using Analyzer.Scraping.Projects;
 using Autofac;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.TeamFoundation.SourceControl.WebApi;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
@@ -17,8 +17,8 @@ namespace Analyzer;
 
 internal static class Program
 {
-    private const string fromDateRaw = "2022-11-01";
-    private const string toDateRaw = "2022-11-30";
+    private const string fromDateRaw = "2022-01-01";
+    private const string toDateRaw = "2022-12-16";
 
     public static async Task Main(string[] args)
     {
@@ -46,10 +46,21 @@ internal static class Program
 
     private static void ConfigureLogging()
     {
+        const string logFilePath = "lastrun.log";
+        try
+        {
+            File.Delete(logFilePath);
+        }
+        catch
+        {
+            // ignored
+        }
+
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Information)
             .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+            .WriteTo.File(logFilePath, LogEventLevel.Debug)
             .CreateLogger();
         
         Log.Information("Logging configured");
@@ -70,8 +81,15 @@ internal static class Program
 
         ConcurrentQueue<IScraperDefinition> definitions = new();
         definitions.Enqueue(new ProjectScraperDefinition(dates));
+        // await using var context = scope.Resolve<DevOpsContext>();
+        // var repos = await context.Repositories.Include(r=>r.Project).ToListAsync();
+        // foreach (var repo in repos)
+        // {
+        //     definitions.Enqueue(new PullRequestScraperDefinition(repo.Project.DevOpsId, repo.DevOpsId));
+        // }
 
         Log.Information("Beginning scraping");
+        var scrapedCount = 0;
         while (definitions.TryDequeue(out var definition))
         {
             await using var innerScope = scope.BeginLifetimeScope();
@@ -79,7 +97,9 @@ internal static class Program
             Log.Debug("Running data scraping for {@Definition}", definition);
             var runner = innerScope.Resolve<IScraperRunner>();
             await foreach (var next in runner.RunAsync(definition, default)) definitions.Enqueue(next);
-            
+
+            scrapedCount++;
+            Log.Debug("{Count} definitions scraped", scrapedCount);
             Log.Debug("{Count} remaining definitions to scrape", definitions.Count);
         }
     }

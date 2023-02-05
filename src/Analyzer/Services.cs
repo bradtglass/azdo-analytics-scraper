@@ -38,6 +38,10 @@ public static class Services
             .As<ILoggerFactory>()
             .SingleInstance();
 
+        builder.RegisterGeneric(typeof(Logger<>))
+            .As(typeof(ILogger<>))
+            .InstancePerDependency();
+
         // API Client
         builder.Register(_ => CreateClientOptions())
             .As<AnalyticsScraperClientOptions>()
